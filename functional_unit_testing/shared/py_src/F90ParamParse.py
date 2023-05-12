@@ -43,10 +43,8 @@ def GetSymbolUsage(filename,checkstr_in):
 
     checkstr = checkstr_in.lower()
 
-    f = open(filename,"r")
-    contents = f.readlines()
-    f.close()
-
+    with open(filename,"r") as f:
+        contents = f.readlines()
     strclose = ',)( '
 
     var_list = []
@@ -56,10 +54,10 @@ def GetSymbolUsage(filename,checkstr_in):
     for line in contents:
         if checkstr in line.lower():
 
-            if(checkstr[-1] != '%'):
+            if (checkstr[-1] != '%'):
                 print('The GetSymbolUsage() procedure requires')
                 print(' that a structure ending with % is passed in')
-                print(' check_str: --{}--'.format(check_str))
+                print(f' check_str: --{check_str}--')
                 exit(2)
 
             # We compare all in lower-case
@@ -108,9 +106,9 @@ def GetSymbolUsage(filename,checkstr_in):
 
 
 
-    if(not found):
-        print('No parameters with prefix: {}'.format(checkstr))
-        print('were found in file: {}'.format(filename))
+    if (not found):
+        print(f'No parameters with prefix: {checkstr}')
+        print(f'were found in file: {filename}')
         print('If this is expected, remove that file from search list.')
         exit(2)
 
@@ -122,17 +120,8 @@ def GetSymbolUsage(filename,checkstr_in):
 
 def GetPFTParmFileSymbols(var_list,pft_filename):
 
-    #---------------------------------------------------------------
-    # This procedure will determine the parameter file symbol/name
-    # for a given PFT parameter name.  This relies on specific
-    # file syntax in the PFT definitions file, so this is specific
-    # only to PFT parameters.
-    # --------------------------------------------------------------
-
-    f = open(pft_filename,"r")
-    contents = f.readlines()
-    f.close()
-
+    with open(pft_filename,"r") as f:
+        contents = f.readlines()
     var_name_list = []
     for var in var_list:
         for i,line in enumerate(contents):
@@ -149,10 +138,7 @@ def MakeListUnique(list_in):
 
     unique_list = []
     for var in list_in:
-        found = False
-        for uvar in unique_list:
-            if (var.var_sym == uvar.var_sym):
-                found = True
+        found = any((var.var_sym == uvar.var_sym) for uvar in unique_list)
         if(not found):
             unique_list.append(var)
 

@@ -57,10 +57,8 @@ for elem in var_list:
 
 
 
-f = open("f90src/UnitWrapMod.F90_in", "r")
-contents = f.readlines()
-f.close()
-
+with open("f90src/UnitWrapMod.F90_in", "r") as f:
+    contents = f.readlines()
 # ADD ARGUMENTS TO EDPFTVARCONALLOC
 # ---------------------------------
 
@@ -69,15 +67,9 @@ for i,str in enumerate(contents):
         index0=i
 
 str=''
-icount=0
-for key, value in dims.iteritems():
-    print('{}'.format(key))
-    if(icount==0):
-        str+=key
-    else:
-        str+=(', & \n   '+key)
-    icount+=1
-
+for icount, (key, value) in enumerate(dims.iteritems()):
+    print(f'{key}')
+    str += key if (icount==0) else (', & \n   '+key)
 strsplit = contents[index0].split('ARGUMENT_IN1')
 strreplace = strsplit[0]+str+strsplit[1]
 
@@ -88,11 +80,9 @@ for i,str in enumerate(contents):
     if 'ARGUMENT_DEF1' in str:
         index0=i
 
-str=''
-for key, value in dims.iteritems():
-    str+=('   integer,intent(in) :: '+key+'\n')
-
-
+str = ''.join(
+    f'   integer,intent(in) :: {key}' + '\n' for key, value in dims.iteritems()
+)
 contents[index0] = str
 
 
@@ -115,32 +105,24 @@ for i,str in enumerate(contents):
 index=index0+2
 for symbol, var in parms.iteritems():
 
-    # Generate the dimension names
-
-    dim_alloc_str=''
-    icount=0
-    for dimname in reversed(var.dim_namelist):
-        if(icount==0):
-            dim_alloc_str+=dimname
-        else:
-            dim_alloc_str+=(','+dimname)
-        icount+=1
-
-
-    if(var.ndims==1):
-        ins_l1='\t allocate(prt_params%{}({}))\n'.format(symbol,dim_alloc_str)
-        ins_l2='\t prt_params%{}(:) = fates_unset_r8\n'.format(symbol)
+    dim_alloc_str = ''.join(
+        dimname if (icount == 0) else f',{dimname}'
+        for icount, dimname in enumerate(reversed(var.dim_namelist))
+    )
+    if var.ndims == 1:
+        ins_l1 = f'\t allocate(prt_params%{symbol}({dim_alloc_str}))\n'
+        ins_l2 = f'\t prt_params%{symbol}(:) = fates_unset_r8\n'
         ins_l3='\t iv1 = iv1 + 1\n'
-        ins_l4='\t prt_params_ptr%var1d(iv1)%var_name = "{}"\n'.format(var.symbol)
-        ins_l5='\t prt_params_ptr%var1d(iv1)%var_rp   => prt_params%{}\n'.format(symbol)
+        ins_l4 = f'\t prt_params_ptr%var1d(iv1)%var_name = "{var.symbol}"\n'
+        ins_l5 = f'\t prt_params_ptr%var1d(iv1)%var_rp   => prt_params%{symbol}\n'
         ins_l6='\t prt_params_ptr%var1d(iv1)%vtype    = 1\n'
         ins_l7='\n'
-    elif(var.ndims==2):
-        ins_l1='\t allocate(prt_params%{}({}))\n'.format(symbol,dim_alloc_str)
-        ins_l2='\t prt_params%{}(:,:) = fates_unset_r8\n'.format(symbol)
+    elif var.ndims == 2:
+        ins_l1 = f'\t allocate(prt_params%{symbol}({dim_alloc_str}))\n'
+        ins_l2 = f'\t prt_params%{symbol}(:,:) = fates_unset_r8\n'
         ins_l3='\t iv2 = iv2 + 1\n'
-        ins_l4='\t prt_params_ptr%var2d(iv2)%var_name = "{}"\n'.format(var.symbol)
-        ins_l5='\t prt_params_ptr%var2d(iv2)%var_rp   => prt_params%{}\n'.format(symbol)
+        ins_l4 = f'\t prt_params_ptr%var2d(iv2)%var_name = "{var.symbol}"\n'
+        ins_l5 = f'\t prt_params_ptr%var2d(iv2)%var_rp   => prt_params%{symbol}\n'
         ins_l6='\t prt_params_ptr%var2d(iv2)%vtype    = 1\n'
         ins_l7='\n'
     else:
@@ -159,7 +141,6 @@ for symbol, var in parms.iteritems():
     index=index+7
 
 
-f = open("f90src/UnitWrapMod.F90", "w+")
-contents = "".join(contents)
-f.write(contents)
-f.close()
+with open("f90src/UnitWrapMod.F90", "w+") as f:
+    contents = "".join(contents)
+    f.write(contents)

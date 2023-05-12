@@ -125,11 +125,9 @@ def interp_args(argv):
         usage()
         sys.exit(2)
     else:
-        donor_pft_indices = []
-        for strpft in donor_pft_indices_str.split(','):
-            donor_pft_indices.append(int(strpft))
-
-
+        donor_pft_indices = [
+            int(strpft) for strpft in donor_pft_indices_str.split(',')
+        ]
     return (input_fname,output_fname,donor_pft_indices,histflag)
 
 
@@ -152,12 +150,12 @@ def main(argv):
     fp_in  = netcdf.netcdf_file(input_fname, 'r')
 
     for key, value in sorted(fp_in.dimensions.items()):
-        if(key==pft_dim_name):
-            fp_out.createDimension(key,int(num_pft_out))
-            print('Creating Dimension: {}={}'.format(key,num_pft_out))
+        if (key==pft_dim_name):
+            fp_out.createDimension(key, num_pft_out)
+            print(f'Creating Dimension: {key}={num_pft_out}')
         else:
             fp_out.createDimension(key,int(value))
-            print('Creating Dimension: {}={}'.format(key,value))
+            print(f'Creating Dimension: {key}={value}')
 
     for key, value in sorted(fp_in.variables.items()):
         print('Creating Variable: ',key)
@@ -191,7 +189,7 @@ def main(argv):
 
         # Copy over the input data
         # Tedious, but I have to permute through all combinations of dimension position
-        if( pft_dim_len == 0 ):
+        if ( pft_dim_len == 0 ):
             out_var = fp_out.createVariable(key,'d',(fp_in.variables.get(key).dimensions))
             out_var.assignValue(float(fp_in.variables.get(key).data))
         elif( (pft_dim_found==-1) & (prt_dim_found==-1) & (litt_dim_found==-1) & (hydro_dim_found==-1)  ):
@@ -204,8 +202,6 @@ def main(argv):
                 tmp_out[id] = fp_in.variables.get(key).data[ipft-1]
             out_var[:] = tmp_out
 
-        # 2D   hydro_organ - fates_pft
-        # or.. prt_organ - fates_pft
         elif( (pft_dim_found==1) & (pft_dim_len==2) ):
             out_var = fp_out.createVariable(key,'d',(fp_in.variables.get(key).dimensions))
             dim2_len = fp_in.dimensions.get(fp_in.variables.get(key).dimensions[0])
@@ -215,13 +211,13 @@ def main(argv):
                     tmp_out[idim,id] = fp_in.variables.get(key).data[idim,ipft-1]
             out_var[:] = tmp_out
 
-        elif( (pft_dim_found==0) & (pft_dim_len==2) ):          # fates_pft - string_length
+        elif ( (pft_dim_found==0) & (pft_dim_len==2) ):  # fates_pft - string_length
             out_var = fp_out.createVariable(key,'c',(fp_in.variables.get(key).dimensions))
             dim2_len = fp_in.dimensions.get(fp_in.variables.get(key).dimensions[1])
-            out_var[:] = np.empty([num_pft_out,dim2_len], dtype="S{}".format(dim2_len))
+            out_var[:] = np.empty([num_pft_out,dim2_len], dtype=f"S{dim2_len}")
             for id,ipft in enumerate(donor_pft_indices):
                 out_var[id] = fp_in.variables.get(key).data[ipft-1]
-                
+
         elif( (prt_dim_found==0) & (pft_dim_len==2) ):         
             out_var = fp_out.createVariable(key,'c',(fp_in.variables.get(key).dimensions))
             out_var[:] = in_var[:]
@@ -229,7 +225,7 @@ def main(argv):
         elif( (hydro_dim_found==0) & (string_dim_found>=0) ):      
             out_var = fp_out.createVariable(key,'c',(fp_in.variables.get(key).dimensions))
             out_var[:] = in_var[:]
-        
+
         elif( (litt_dim_found==0) & (string_dim_found>=0) ):       
             out_var = fp_out.createVariable(key,'c',(fp_in.variables.get(key).dimensions))
             out_var[:] = in_var[:]   
@@ -249,15 +245,14 @@ def main(argv):
             print('Please add this condition to the logic above this statement.')
             print('Aborting')
             for idim, name in enumerate(fp_in.variables.get(key).dimensions):
-               print("idim: {}, name: {}".format(idim,name))
+                print(f"idim: {idim}, name: {name}")
             exit(2)
 
         out_var.units     = in_var.units
         out_var.long_name = in_var.long_name
 
-    if(histflag):
-        fp_out.history = "This file was made from FatesPFTIndexSwapper.py \n Input File = {} \n Indices = {}"\
-              .format(input_fname,donor_pft_indices)
+    if histflag:
+        fp_out.history = f"This file was made from FatesPFTIndexSwapper.py \n Input File = {input_fname} \n Indices = {donor_pft_indices}"
 
     #var_out.mode = var.mode
     #fp.flush()

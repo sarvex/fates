@@ -156,10 +156,10 @@ def main(argv):
     version = platform.python_version()
     verlist = version.split('.')
 
-    if( not ((verlist[0] == '2') & (verlist[1] ==  '7') & (int(verlist[2])>=15) )  ):
+    if ( not ((verlist[0] == '2') & (verlist[1] ==  '7') & (int(verlist[2])>=15) )  ):
         print("The PARTEH driver mus be run with python 2.7")
         print(" with tertiary version >=15.")
-        print(" your version is {}".format(version))
+        print(f" your version is {version}")
         print(" exiting...")
         sys.exit(2)
 
@@ -271,7 +271,7 @@ def main(argv):
 
     fig0, ax1 = plt.subplots(1,1,figsize=(9,6))
     for ic in range(ncomp):
-        ax1.plot(theta[ic,:],psi[ic,:],label='{}'.format(names[ic]))
+        ax1.plot(theta[ic,:], psi[ic,:], label=f'{names[ic]}')
 
     ax1.set_ylim((-10,1))
     ax1.set_ylabel('Psi [MPa]')
@@ -298,7 +298,7 @@ def main(argv):
 
     fig11, ax1 = plt.subplots(1,1,figsize=(9,6))
     for ic in range(ncomp):
-        ax1.plot(theta[ic,],1.0/dpsidth[ic,],label='{}'.format(names[ic]))
+        ax1.plot(theta[ic,], 1.0/dpsidth[ic,], label=f'{names[ic]}')
 
     ax1.set_ylabel('dTh/dPSI/ [m3 m-3 MPa-1]')
     ax1.set_xlabel('VWC [m3/m3]')
@@ -329,7 +329,7 @@ def main(argv):
 
     fig2, ax1 = plt.subplots(1,1,figsize=(9,6))
     for ic in range(ncomp):
-        ax1.plot(psi[ic,:],ftc[ic,:],label='{}'.format(names[ic]))
+        ax1.plot(psi[ic,:], ftc[ic,:], label=f'{names[ic]}')
 
     ax1.set_ylabel('FTC')
     ax1.set_xlabel('Psi [MPa]')
@@ -342,7 +342,7 @@ def main(argv):
 
     fig4, ax1 = plt.subplots(1,1,figsize=(9,6))
     for ic in range(ncomp):
-        ax1.plot(theta[ic,:],ftc[ic,:],label='{}'.format(names[ic]))
+        ax1.plot(theta[ic,:], ftc[ic,:], label=f'{names[ic]}')
 
     ax1.set_ylabel('FTC')
     ax1.set_xlabel('Theta [m3/m3]')
@@ -353,7 +353,7 @@ def main(argv):
     fig3,ax1 = plt.subplots(1,1,figsize=(9,6))
     for ic in range(ncomp):
 #        ax1.plot(psi[ic,:],abs(dftcdpsi[ic,:]-cdftcdpsi[ic,:])/abs(cdftcdpsi[ic,:]),label='{}'.format(ic))
-        ax1.plot(psi[ic,:],dftcdpsi[ic,:],label='{}'.format(names[ic]))
+        ax1.plot(psi[ic,:], dftcdpsi[ic,:], label=f'{names[ic]}')
 
     ax1.set_ylabel('dFTC/dPSI')
     ax1.set_xlabel('Psi [MPa]')
@@ -372,13 +372,11 @@ def main(argv):
 
 def semilogneg(x):
 
-    y = np.sign(x)*np.log(abs(x))
-    return(y)
+    return np.sign(x)*np.log(abs(x))
 
 def semilog10net(x):
 
-    y = np.sign(x)*np.log10(abs(x))
-    return(y)
+    return np.sign(x)*np.log10(abs(x))
 
 
 # =======================================================================================

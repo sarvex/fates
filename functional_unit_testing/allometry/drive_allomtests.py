@@ -95,39 +95,34 @@ def DiscreteCubeHelix(N):
 # =======================================================================================
 def CDLParse(file_name,parm):
 
-    fp = open(file_name,"r")
-    contents = fp.readlines()
-    fp.close()
-
+    with open(file_name,"r") as fp:
+        contents = fp.readlines()
     # Look in the file for the parameters
     # symbol/name, record the line number
     iline=-1
     isfirst = True
     for i,line in enumerate(contents):
-        if(parm.symbol in line):
+        if (parm.symbol in line):
             iline=i
-            if(isfirst):
+            if isfirst:
                 dtype = line.split()[0]
-                if(dtype.strip()=="float" or (dtype.strip()=="double")):
+                if dtype.strip() in ["float", "double"]:
                     parm.dtype = 0
                 elif(dtype.strip()=="char"):
                     parm.dtype = 1
                 isFirst=False
 
-    if(iline==-1):
-        print('Could not find symbol: {} in file: {}'.format(parm.symbol,file_name))
+    if (iline==-1):
+        print(f'Could not find symbol: {parm.symbol} in file: {file_name}')
         exit(2)
     else:
         search_field=True
         line=""
         lcount=0
-        while(search_field and (lcount<100)):
+        while (search_field and (lcount<100)):
             line+=contents[iline]
-            if(line.count(';')>0):
-                search_field=False
-            else:
-                search_field=True
-            lcount=lcount+1
+            search_field = line.count(';') <= 0
+            lcount += 1
             iline=iline+1
 
         # Parse the line
@@ -136,7 +131,7 @@ def CDLParse(file_name,parm):
         del line_split[0]
 
         # This is for read numbers
-        if(parm.dtype == 0):
+        if (parm.dtype == 0):
             ival=0
             for str0 in line_split:
                 str=""
@@ -148,11 +143,10 @@ def CDLParse(file_name,parm):
                 if(isnum):
                     parm.vals.append(float(str))
 
-        # This is a sting
-        elif(parm.dtype == 1):
+        elif (parm.dtype == 1):
             for str0 in line_split:
                 # Loop several times to trim stuff off
-                for i in range(5):
+                for _ in range(5):
                     str0=str0.strip().strip('\"').strip(';').strip()
                 parm.vals.append(str0)
 

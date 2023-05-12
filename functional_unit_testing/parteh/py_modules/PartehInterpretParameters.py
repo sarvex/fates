@@ -39,17 +39,17 @@ def load_xml(xmlfile):  #
     # List of PFTs for the plants
 
     use_pfts_text = xmlroot.find('use_pfts').text
-    use_pfts = []
-    for use_pft in use_pfts_text.strip().split(','):
-        use_pfts.append(int(use_pft))
-
+    use_pfts = [int(use_pft) for use_pft in use_pfts_text.strip().split(',')]
     # Specify the boundary condition
     # -----------------------------------------------------------------------------------
 
-    boundary_c_check = {}
-    boundary_c_check['AllometricCarbon']=['DailyCFromCArea']
-    boundary_c_check['AllometricCNP']=['DailyCNPFromCArea','DailyCNPFromStorageSinWaveNoMaint']
-
+    boundary_c_check = {
+        'AllometricCarbon': ['DailyCFromCArea'],
+        'AllometricCNP': [
+            'DailyCNPFromCArea',
+            'DailyCNPFromStorageSinWaveNoMaint',
+        ],
+    }
     boundary_method = xmlroot.find('boundary_formulation').text.strip()
 
 #    if ( not any(x in boundary_method for x in boundary_c_check[parameters.hypothesis]) ):
@@ -68,20 +68,19 @@ def load_xml(xmlfile):  #
 
     driver_params_root = xmlroot.find('driver_parameters')
 
-    for par_idx, par_elem in enumerate(driver_params_root.iter('pft_par')):
-
+    for par_elem in driver_params_root.iter('pft_par'):
         pft_param_name = par_elem.attrib['name'].strip()
         pft_param_val  = par_elem.text.strip()
         pft_vector = [float(i) for i in pft_param_val.split(',')]
         if (len(pft_vector) != len(use_pfts)):
             print('PFT parameters in xml file must have as as many entries as use_pfts')
-            print('{} is: {}'.format(pft_param_name,pft_param_val))
+            print(f'{pft_param_name} is: {pft_param_val}')
             print('exiting')
             exit(1)
 
         driver_params[pft_param_name] = PartehTypes.driver_param_type()
         #        driver_params.append(driver_param)
-        for idx,value in enumerate(pft_vector):
+        for value in pft_vector:
             driver_params[pft_param_name].param_vals.append(value)
 
 

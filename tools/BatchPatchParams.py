@@ -33,13 +33,13 @@ def load_xml(xmlfile):
     new_cdl = xmlroot.find('new_file').text
 
     pftparams = xmlroot.find('pft_trim_list').text.replace(" ","")
-    
+
     paramroot = xmlroot.find('parameters') 
 
     grouplist = []
     for group in paramroot:
 
-        if(not('ids' in group.attrib.keys())):
+        if 'ids' not in group.attrib.keys():
             print("pft_mod_group must have an ids attribute with comma delimited pft indices")
             print("exiting")
             exit(2)
@@ -47,15 +47,15 @@ def load_xml(xmlfile):
         pft_str = group.attrib['ids'].strip()
         pft_strvec = pft_str.split(',')
         pft_ids = [int(s) for s in pft_strvec]
-        
-        print("Processing PFT group: "+group.tag+" ids: "+pft_str)
+
+        print(f"Processing PFT group: {group.tag} ids: {pft_str}")
+                
+            #paramlist = []
+            #for param in paramroot:
+            #    print("parsing "+param.tag)
+            #    paramlist.append(param_type(param.tag,param.text))
             
-        #paramlist = []
-        #for param in paramroot:
-        #    print("parsing "+param.tag)
-        #    paramlist.append(param_type(param.tag,param.text))
-        
-        
+
     code.interact(local=dict(globals(), **locals()))
     return(base_cdl,new_cdl,pftparams,paramlist)
 
@@ -66,19 +66,19 @@ def load_xml(xmlfile):
 
 def parse_syscall_str(fnamein,fnameout,pft_index,param_name,param_val):
 
-    if(pft_index==0):
+    if (pft_index==0):
         sys_call_str = "../tools/modify_fates_paramfile.py"+" --fin " + fnamein + \
             " --fout " + fnameout + " --var " + param_name + " --silent " +\
             " --val " + "\" "+param_val+"\"" + " --nohist --overwrite --all"
     else:
-        pft_str_index="{}".format(pft_index)
+        pft_str_index = f"{pft_index}"
         sys_call_str = "../tools/modify_fates_paramfile.py"+" --fin " + fnamein + \
             " --fout " + fnameout + " --var " + param_name + " --silent " +\
             " --val " + "\" "+param_val+"\"" + " --nohist --overwrite --pft "+pft_str_index
 
     if(debug):
         print(sys_call_str)
-    
+
     return(sys_call_str)
 
 
@@ -103,15 +103,15 @@ def main():
 
     # Convert the base cdl file into a temp nc binary
     base_nc = os.popen('mktemp').read().rstrip('\n')
-    gencmd = "ncgen -o "+base_nc+" "+base_cdl
+    gencmd = f"ncgen -o {base_nc} {base_cdl}"
     os.system(gencmd)
-    
+
     # Generate a temp output file name
     new_nc = os.popen('mktemp').read().rstrip('\n')
 
     # Use FatesPFTIndexSwapper.py to prune out unwanted PFTs
     pft_trim_list = xmlroot.find('pft_trim_list').text.replace(" ","")
-    swapcmd="../tools/FatesPFTIndexSwapper.py --pft-indices="+pft_trim_list+" --fin="+base_nc+" --fout="+new_nc+" --nohist"   #+" 1>/dev/null"
+    swapcmd = f"../tools/FatesPFTIndexSwapper.py --pft-indices={pft_trim_list} --fin={base_nc} --fout={new_nc} --nohist"
     os.system(swapcmd)
 
     # On subsequent parameters, overwrite the file
@@ -121,19 +121,19 @@ def main():
     grouplist = []
     for group in paramroot:
 
-        if(group.tag.strip() == 'non_pft_group'):
+        if (group.tag.strip() == 'non_pft_group'):
 
             print("Processing non_pft_group")
-            
+
             for param in group:
-                print("parsing "+param.tag)
-            
+                print(f"parsing {param.tag}")
+
                 change_str = parse_syscall_str(new_nc,new_nc,0,param.tag,param.text.replace(" ",""))
                 os.system(change_str)
 
-        elif(group.tag.strip() == 'pft_group'):
-        
-            if(not('ids' in group.attrib.keys())):
+        elif (group.tag.strip() == 'pft_group'):
+
+            if 'ids' not in group.attrib.keys():
                 print("pft_mod_group must have an ids attribute with comma delimited pft indices")
                 print("exiting")
                 exit(2)
@@ -141,13 +141,13 @@ def main():
             pft_str = group.attrib['ids'].strip()
             pft_strvec = pft_str.split(',')
             pft_ids = [int(s) for s in pft_strvec]
-        
-            print("Processing PFT group: "+group.tag+" ids: "+pft_str)
-            
+
+            print(f"Processing PFT group: {group.tag} ids: {pft_str}")
+
             for param in group:
-                print("parsing "+param.tag)
-                
-                param_vec = [str_val for str_val in param.text.replace(" ", "").split(',')]
+                print(f"parsing {param.tag}")
+
+                param_vec = list(param.text.replace(" ", "").split(','))
 
                 # The number of parameters does not need to equal to the number of PFTs
                 # but it does need to be equally divisible by it
@@ -157,7 +157,7 @@ def main():
                     print("inconsistent number of parameter values and number of pfts specified")
                     print("exiting")
                     exit(2)
-                                
+
                 for j,pft_id in enumerate(pft_ids):
                     j0 = j*int(v_per_p)
                     j1 = (j+1)*int(v_per_p)
@@ -174,22 +174,21 @@ def main():
 
     # Append history
     fp_nc  = netcdf.netcdf_file(new_nc, 'a')
-    fp_nc.history = "This file was generated by BatchPatchParams.py:\n"\
-                    "CDL Base File = {}\n"\
-                    "XML patch file = {}"\
-                     .format(base_cdl,args.xmlfile)
+    fp_nc.history = f"This file was generated by BatchPatchParams.py:\nCDL Base File = {base_cdl}\nXML patch file = {args.xmlfile}"
     fp_nc.close()
 
     # Sort the new file
     newer_nc = os.popen('mktemp').read().rstrip('\n')
-    os.system("../tools/ncvarsort.py --fin "+new_nc+" --fout "+newer_nc+" --overwrite")
+    os.system(
+        f"../tools/ncvarsort.py --fin {new_nc} --fout {newer_nc} --overwrite"
+    )
 
 
     # Dump the new file to the cdl
-    os.system("ncdump "+newer_nc+" > "+new_cdl)
+    os.system(f"ncdump {newer_nc} > {new_cdl}")
 
     print("\nBatch parameter transfer complete\n")
-    print("\nGenerated: {}\n".format(new_cdl))
+    print(f"\nGenerated: {new_cdl}\n")
         
 # This is the actual call to main
 

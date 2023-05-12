@@ -23,13 +23,13 @@ def load_xml(xmlfile):
     # This routine parses the XML tree
 
     xmlroot = et.parse(xmlfile).getroot()
-    print("\nOpened: {}\n".format(xmlfile))
+    print(f"\nOpened: {xmlfile}\n")
 
     base_cdl = xmlroot.find('base_file').text
     new_cdl = xmlroot.find('new_file').text
 
     pft_list = xmlroot.find('pft_list').text.replace(" ","")
-    
+
     modroot = xmlroot.find('mods') 
 
     return(base_cdl,new_cdl,pft_list,modroot)
@@ -38,19 +38,13 @@ def load_xml(xmlfile):
 
 def str2fvec(numstr):
 
-    # Convert a list of strings into floating point numbers
-    
-    numvec = [float(i) for i in numstr.split(',')]
-    return(numvec)
+    return [float(i) for i in numstr.split(',')]
 
 # =======================================================================================
 
 def str2ivec(numstr):
 
-    # Convert a list of strings into integer numbers
-    
-    intvec = [int(i) for i in numstr.split(',')]
-    return(intvec)
+    return [int(i) for i in numstr.split(',')]
 
 # =======================================================================================
 
@@ -76,61 +70,57 @@ def selectvalues(ncfile,dimnames,ipft_list,values,dtype):
     # only works on float arrays currently.  We need to pass in a file
     # so that we can get the dimension sizes associated with the dimension names.
 
-    if(len(ipft_list) != ncfile.dimensions['fates_pft']):
+    if (len(ipft_list) != ncfile.dimensions['fates_pft']):
         print('you list of pfts in the xml file must be')
         print('the same size as the fates_pft dimension')
         print('in your destination file. exiting')
-        print('len(ipft_list) = {}'.format(len(ipft_list)))
-        print('fates_pft dim = {}'.format(ncfile.dimensions['fates_pft']))
+        print(f'len(ipft_list) = {len(ipft_list)}')
+        print(f"fates_pft dim = {ncfile.dimensions['fates_pft']}")
         exit(2)
 
     # shift the pft list to a base of 0 instead of 1
-        
+
     pft_dim = -1
-    dim_size = [0 for i in range(0,len(dimnames))]
+    dim_size = [0 for _ in range(0,len(dimnames))]
 
     for idim, name in enumerate(dimnames):
         dim_size[idim] = ncfile.dimensions[name]
         if(name=='fates_pft'):
             pft_dim = idim
             pft_dim_size = ncfile.dimensions['fates_pft']
-    
-    if(len(dimnames) == 1):
 
-        if(pft_dim==0):
-            dim1_list = ipft_list
-        else:
-            dim1_list = range(0,dim_size[0])
-        
+    if (len(dimnames) == 1):
+
+        dim1_list = ipft_list if (pft_dim==0) else range(0,dim_size[0])
         sel_values = np.zeros([len(dim1_list)])
         for i,ipft in enumerate(dim1_list):
             sel_values[i] = values[ipft]
-            
-    elif(len(dimnames) == 2 ):
 
-        if(dtype=="c"):
+    elif (len(dimnames) == 2 ):
 
-            if(pft_dim>0):
-                print("problem with pft_dim: {},{}".format(dimnames[0],dimnames[1]));exit(2)
-            
-            if(pft_dim==0):
-                dim1_list = ipft_list
-            else:
-                dim1_list = range(0,dim_size[0])
+        if (dtype=="c"):
 
+            if (pft_dim>0):
+                print(f"problem with pft_dim: {dimnames[0]},{dimnames[1]}")
+                exit(2)
+
+            dim1_list = ipft_list if (pft_dim==0) else range(0,dim_size[0])
             sel_values = np.chararray([len(dim1_list),dim_size[1]])
             sel_values[:] = ""
             for i,ipft in enumerate(dim1_list):
                 for j,cc in enumerate(values[ipft]):
                     sel_values[i][j] = cc
 
-                
-        elif(dtype=="d"):
 
-            if(pft_dim==0):
-                print("problem with pft_dim: {},{}".format(dimnames[0],dimnames[1]));exit(2)
-                
-            if(pft_dim==1):
+        elif (dtype=="d"):
+
+            if pft_dim == 0:
+                print(f"problem with pft_dim: {dimnames[0]},{dimnames[1]}")
+                exit(2)
+
+                dim1_list = range(0,dim_size[1])
+
+            elif pft_dim == 1:
                 dim1_list = ipft_list
             else:
                 dim1_list = range(0,dim_size[1])
@@ -142,7 +132,7 @@ def selectvalues(ncfile,dimnames,ipft_list,values,dtype):
                     sel_values[i2,i] = values[id]
 
     else:
-                    
+
         # Scalar
         #code.interact(local=dict(globals(), **locals()))
         sel_values = float(values[0])
@@ -180,14 +170,14 @@ def removevar(base_nc,varname):
                 new_var.assignValue(float(value.data))
             else:
                 new_var[:] = value[:].copy()
-                
+
             new_var.units = value.units
             new_var.long_name = value.long_name
             #try:
             #    new_var.use_case = value.use_case
             #except:
             #    new_var.use_case = "undefined"
-    
+
     fp_new.history = fp_base.history
 
     if(not found):
@@ -197,8 +187,8 @@ def removevar(base_nc,varname):
     fp_new.flush()
     fp_base.close()
     fp_new.close()
-    
-    mvcmd = "(rm -f "+base_nc+";mv "+new_nc+" "+base_nc+")"
+
+    mvcmd = f"(rm -f {base_nc};mv {new_nc} {base_nc})"
     os.system(mvcmd)
     
     

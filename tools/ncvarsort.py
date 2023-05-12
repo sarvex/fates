@@ -70,37 +70,35 @@ def main():
         varnames_list[i] = sorted(varnames_list[i], key=lambda L: (L.lower(), L))
         varnames_list_sorted.extend(varnames_list[i])
 
-    if args.silent:
-        verbose = False
-    else:
-        verbose = True
-        
-    # write list of variables in ourput order
+    verbose = not args.silent
     if args.debug:
-        if (not verbose):
-            print("cant run debug and silent in ncvarsort")
-            exit(2)
-        else:
+        if verbose:
             print(varnames_list_sorted)
 
-    
-    
+
+
+        else:
+            print("cant run debug and silent in ncvarsort")
+            exit(2)
     # open the output filename, deleting it if it exists already.
     if os.path.isfile(args.fnameout):
         if args.fnameout == args.fnamein:
             raise ValueError('Error: output file name is the same as the input file name.')
         elif args.overwrite:
-            if (verbose): print('replacing file: '+args.fnameout)
+            if verbose:
+                print(f'replacing file: {args.fnameout}')
             os.remove(args.fnameout)
         else:
-            raise ValueError('Output file already exists and overwrite flag not specified for filename: '+args.fnameout)
+            raise ValueError(
+                f'Output file already exists and overwrite flag not specified for filename: {args.fnameout}'
+            )
     #
     dsout = nc.Dataset(args.fnameout,  "w")
     #
     #Copy dimensions
     for dname, the_dim in dsin.dimensions.items():
-        if args.debug:
-            if (verbose): print(dname, the_dim.size)
+        if args.debug and verbose:
+            print(dname, the_dim.size)
         dsout.createDimension(dname, the_dim.size )
     #
     if (verbose): print()
@@ -113,12 +111,12 @@ def main():
     #
     # go through each variable in the order of the sorted master list, and copy the variable
     # as well as all metadata to the new file.
-    for i in range(len(varnames_list_sorted)):
-        v_name = varnames_list_sorted[i]
+    for item in varnames_list_sorted:
+        v_name = item
         varin = dsin.variables[v_name]
         outVar = dsout.createVariable(v_name, varin.datatype, varin.dimensions)
-        if args.debug:
-            if (verbose): print(v_name)
+        if args.debug and verbose:
+            print(v_name)
         #
         outVar.setncatts({k: varin.getncattr(k) for k in varin.ncattrs()})
         outVar[:] = varin[:]

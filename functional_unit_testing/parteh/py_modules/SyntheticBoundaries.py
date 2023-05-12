@@ -48,29 +48,16 @@ def DailyCFromUnitGPPAR(leaf_area,AGB):
     GPP = 100.8*GPP_per_larea_yr * leaf_area / day_per_year
     AR  = AR_per_kg_yr * AGB     / day_per_year
 
-    NetDailyC = GPP - AR
-
-    return NetDailyC
+    return GPP - AR
 
 
 def DailyCFromCArea(presc_npp_p1,c_area,phen_type,leaf_status):
 
-    # -----------------------------------------------------------------------------------
-    # This method was provided by Charlie Koven via is inferences from the PPA
-    # literature.  Here, net daily carbon [kg] is based on one of two excluding
-    # parmaters (NPP per crown area per year), for plants that are either in
-    # the upper canopy (access to sunlight) or in the understory (low sunlight)
-    #
-    # c_area, footprint of the crown area [m2].
-    # presc_npp_p1, npp generated per crown area         [kgC/m2/yr]
-    # -----------------------------------------------------------------------------------
-
-    if( (phen_type == 1) or (leaf_status ==2)):
-        NetDailyC = presc_npp_p1 * c_area / day_per_year
-    else:
-        NetDailyC = 0.0
-
-    return NetDailyC
+    return (
+        presc_npp_p1 * c_area / day_per_year
+        if ((phen_type == 1) or (leaf_status == 2))
+        else 0.0
+    )
 
 
 def DailyCNPFromCArea(presc_npp_p1,presc_nflux_p1, \
@@ -162,16 +149,8 @@ def DeciduousPhenology(doy, target_leaf_c, store_c, phen_type):
     else:
         flush_c = 0.0
 
-    if ( doy==leaf_off_doy):
-        drop_frac_c = 1.0
-    else:
-        drop_frac_c = 0.0
-
-    if(doy>=leaf_on_doy and doy<leaf_off_doy):
-        leaf_status = 2          # Leaves are on
-    else:
-        leaf_status = 1          # Leaves are off
-
+    drop_frac_c = 1.0 if ( doy==leaf_off_doy) else 0.0
+    leaf_status = 2 if (doy>=leaf_on_doy and doy<leaf_off_doy) else 1
     if(phen_type==1):
         flush_c     = 0.0
         drop_frac_c = 0.0

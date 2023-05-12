@@ -38,10 +38,7 @@ def CheckFile(filename,check_str):
 
     unique_list = []
     for var in var_list:
-        found = False
-        for uvar in unique_list:
-            if (var.var_sym == uvar.var_sym):
-                found = True
+        found = any((var.var_sym == uvar.var_sym) for uvar in unique_list)
         if(not found):
             unique_list.append(var)
 
@@ -74,13 +71,11 @@ for var in var_list:
     for i,line in enumerate(contents):
         if (var.var_sym in line) and ('data' in line) and ('=' in line):
             var.var_name = contents[i-2].split()[-1].strip('\'')
-            print("{} {} {}".format(var.var_sym,var.var_name,var.n_dims))
+            print(f"{var.var_sym} {var.var_name} {var.n_dims}")
 
 
-f = open("f90src/AllomUnitWrap.F90_in", "r")
-contents = f.readlines()
-f.close()
-
+with open("f90src/AllomUnitWrap.F90_in", "r") as f:
+    contents = f.readlines()
 # Identify where we define the variables, and insert the variable definitions
 
 for i,str in enumerate(contents):
@@ -89,10 +84,10 @@ for i,str in enumerate(contents):
 
 index=index0+2
 for var in var_list:
-    if(var.n_dims==1):
-        contents.insert(index,'    real(r8),pointer :: {}(:)\n'.format(var.var_sym))
-    elif(var.n_dims==2):
-        contents.insert(index,'    real(r8),pointer :: {}(:,:)\n'.format(var.var_sym))
+    if var.n_dims == 1:
+        contents.insert(index, f'    real(r8),pointer :: {var.var_sym}(:)\n')
+    elif var.n_dims == 2:
+        contents.insert(index, f'    real(r8),pointer :: {var.var_sym}(:,:)\n')
     else:
         print('Incorrect number of dims...')
         exit(-2)
@@ -106,21 +101,21 @@ for i,str in enumerate(contents):
         index0=i
 
 index=index0+2
-for ivar,var in enumerate(var_list):
-    if(var.n_dims==1):
-        ins_l1='\t allocate(EDPftvarcon_inst%{}(1:numpft))\n'.format(var.var_sym)
-        ins_l2='\t EDPftvarcon_inst%{}(:) = nan\n'.format(var.var_sym)
+for var in var_list:
+    if var.n_dims == 1:
         ins_l3='\t iv1 = iv1 + 1\n'
-        ins_l4='\t EDPftvarcon_ptr%var1d(iv1)%var_name = "{}"\n'.format(var.var_name)
-        ins_l5='\t EDPftvarcon_ptr%var1d(iv1)%var_rp   => EDPftvarcon_inst%{}\n'.format(var.var_sym)
+        ins_l4 = f'\t EDPftvarcon_ptr%var1d(iv1)%var_name = "{var.var_name}"\n'
+        ins_l1 = f'\t allocate(EDPftvarcon_inst%{var.var_sym}(1:numpft))\n'
+        ins_l2 = f'\t EDPftvarcon_inst%{var.var_sym}(:) = nan\n'
+        ins_l5 = f'\t EDPftvarcon_ptr%var1d(iv1)%var_rp   => EDPftvarcon_inst%{var.var_sym}\n'
         ins_l6='\t EDPftvarcon_ptr%var1d(iv1)%vtype    = 1\n'
         ins_l7='\n'
-    if(var.n_dims==2):
-        ins_l1='\t allocate(EDPftvarcon_inst%{}(1:numpft,1))\n'.format(var.var_sym)
-        ins_l2='\t EDPftvarcon_inst%{}(:,:) = nan\n'.format(var.var_sym)
+    elif var.n_dims == 2:
         ins_l3='\t iv2 = iv2 + 1\n'
-        ins_l4='\t EDPftvarcon_ptr%var2d(iv2)%var_name = "{}"\n'.format(var.var_name)
-        ins_l5='\t EDPftvarcon_ptr%var2d(iv2)%var_rp   => EDPftvarcon_inst%{}\n'.format(var.var_sym)
+        ins_l4 = f'\t EDPftvarcon_ptr%var2d(iv2)%var_name = "{var.var_name}"\n'
+        ins_l1 = f'\t allocate(EDPftvarcon_inst%{var.var_sym}(1:numpft,1))\n'
+        ins_l2 = f'\t EDPftvarcon_inst%{var.var_sym}(:,:) = nan\n'
+        ins_l5 = f'\t EDPftvarcon_ptr%var2d(iv2)%var_rp   => EDPftvarcon_inst%{var.var_sym}\n'
         ins_l6='\t EDPftvarcon_ptr%var2d(iv2)%vtype    = 1\n'
         ins_l7='\n'
 
@@ -134,7 +129,6 @@ for ivar,var in enumerate(var_list):
     index=index+7
 
 
-f = open("f90src/AllomUnitWrap.F90", "w+")
-contents = "".join(contents)
-f.write(contents)
-f.close()
+with open("f90src/AllomUnitWrap.F90", "w+") as f:
+    contents = "".join(contents)
+    f.write(contents)

@@ -97,12 +97,12 @@ class timetype:
         self.datetime_start = np.datetime64("1600-01-01")
         self.datetime_stop  = np.datetime64("1400-01-01")
         self.datetime       = np.datetime64("1300-01-01")
-        self.dt_fullstep    = np.timedelta64(int(86400),'s')
+        self.dt_fullstep = np.timedelta64(86400, 's')
         self.sim_complete   = False
         self.max_err        = -9.9
         self.id_substep     = -9
-        self.dt_substep     = np.timedelta64(int(3600),'s')
-        self.dt_optsubstep  = np.timedelta64(int(3600),'s')
+        self.dt_substep = np.timedelta64(3600, 's')
+        self.dt_optsubstep = np.timedelta64(3600, 's')
 
 
     def InitializeTime(self,date_start_str,date_stop_str,timestep_str,max_trunc_err_str):
@@ -146,12 +146,12 @@ class timetype:
             self.sim_complete = True
 
     def CheckFullStepTime(self,targettime):
-        if(np.abs(self.datetime-targettime)>time_precision):
+        if (np.abs(self.datetime-targettime)>time_precision):
             print('The adaptive time-stepper finished')
             print(' on a time-stamp that does not match')
             print(' the projected timestep')
-            print(' projected: {}'.format(targettime))
-            print(' actual:    {}'.format(self.datetime))
+            print(f' projected: {targettime}')
+            print(f' actual:    {self.datetime}')
             print(' exiting')
             exit(2)
         else:
